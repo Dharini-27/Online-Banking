@@ -1,0 +1,67 @@
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<%@page import="java.sql.DriverManager"%>
+<%@page import="java.sql.ResultSet"%>
+<%@page import="java.sql.Statement"%>
+<%@page import="java.sql.Connection"%>
+<%
+String id = request.getParameter("userid");
+String driver = "com.mysql.jdbc.Driver";
+String connectionUrl = "jdbc:mysql://127.0.0.1:3306/";
+String database = "online_banking_app";
+String userid = "student";
+String password = "student";
+try {
+Class.forName(driver);
+} catch (ClassNotFoundException e) {
+e.printStackTrace();
+}
+Connection connection = null;
+Statement statement = null;
+ResultSet resultSet = null;
+%>
+<!DOCTYPE html>
+<html>
+<body>
+<form method="post" action="transfer.jsp">
+<h1>Last Five Transactions</h1>
+<table border="1">
+<tr>
+<td><b>Date_and_time</b></td>
+<td><b>Source_Account_Number</b></td>
+<td><b>Destination_Account_Number</b></td>
+<td><b>Debited_Amount</b></td>
+<td><b>Balance_Amount </b></td>
+ 
+</tr>
+<%
+try{
+connection = DriverManager.getConnection(connectionUrl+database, userid, password);
+statement=connection.createStatement();
+/*String sql ="SELECT * FROM transaction_details";*/
+//String sql ="SELECT * FROM (SELECT * FROM transaction_details ORDER BY Balance_Amount ASC LIMIT 5)Var1 ORDER BY Balance_Amount  DESC;";
+String sql ="select * from transaction_details ORDER BY Date_and_time DESC LIMIT 5";
+resultSet = statement.executeQuery(sql);
+while(resultSet.next()){
+%>
+<tr>
+<td><%=resultSet.getString("Date_and_time") %></td>
+<td><%=resultSet.getString("Source_Account") %></td>
+<td><%=resultSet.getString("Destination_Account") %></td>
+<td><%=resultSet.getString("Debited_Amount") %></td>
+<td><%=resultSet.getString("Balance_Amount") %></td>
+</tr>
+<% 
+}   
+connection.close();
+} 
+catch (Exception e) {
+e.printStackTrace();
+}
+%>
+
+</table>
+<input type ="submit" value="Fund Transfer"/>
+</form>
+</body>
+</html>

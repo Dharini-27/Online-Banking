@@ -1,0 +1,76 @@
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<%@page import="java.sql.DriverManager"%>
+<%@page import="java.sql.ResultSet"%>
+<%@page import="java.sql.Statement"%>
+<%@page import="java.sql.Connection"%>
+<%@page import="java.sql.PreparedStatement"%>
+<%@page import="java.text.SimpleDateFormat"%>
+<%@page import="java.util.Date"%>
+
+<%
+String id = request.getParameter("userid");
+String driver = "com.mysql.jdbc.Driver";
+String connectionUrl = "jdbc:mysql://127.0.0.1:3306/";
+String database = "online_banking_app";
+String userid = "student";
+String password = "student";
+try {
+Class.forName(driver);
+} catch (ClassNotFoundException e) {
+e.printStackTrace();
+}
+Connection connection = null;
+Statement statement = null;
+ResultSet resultSet = null;
+PreparedStatement pstmt= null;
+long fromAccNo = Long.parseLong(request.getParameter("fromaccnum"));
+long toAccNo = Long.parseLong(request.getParameter("toaccnum"));
+int amt = Integer.parseInt(request.getParameter("amt"));
+Date date = new Date();
+SimpleDateFormat date1=new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
+String currDate= date1.format(date);
+int baseAmt = 0;
+%>
+<!DOCTYPE html>
+<html>
+<body>
+<%
+try{
+connection = DriverManager.getConnection(connectionUrl+database, userid, password);
+statement=connection.createStatement();
+/*String sql ="SELECT * FROM transaction_details";*/
+String sql ="select * from transaction_details ORDER BY Date_and_time DESC LIMIT 1;";
+
+resultSet = statement.executeQuery(sql);
+while(resultSet.next()){
+	baseAmt = resultSet.getInt("Balance_Amount");	
+if(amt<baseAmt){
+int balanceAmt= baseAmt - amt;
+pstmt=connection.prepareStatement("insert into transaction_details(Date_and_Time,Source_Account,Destination_Account,Debited_Amount,Balance_Amount) values(?,?,?,?,?)");
+pstmt.setString(1,currDate);
+pstmt.setLong(2, fromAccNo);
+pstmt.setLong(3, toAccNo);
+pstmt.setInt(4, amt);
+pstmt.setInt(5, balanceAmt);
+pstmt.executeUpdate();
+String site = new String("http://localhost:5210/OnlineBankingApp/onlinebankingapp.jsp");
+response.setStatus(response.SC_MOVED_TEMPORARILY);
+response.setHeader("Location", site); 
+%>
+<%
+}
+else{
+	%>
+	<h1>Transaction Failed! Insufficient Balance!</h1>
+	<%
+}
+}
+connection.close();
+} 
+catch (Exception e) {
+e.printStackTrace();
+}
+%>
+</body>
+</html>
